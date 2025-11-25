@@ -1,15 +1,15 @@
-import { Text, View } from "react-native";
+import { View, Text } from 'react-native'
+import React, { useState } from 'react'
+import axios from 'axios';
+const [data, setData] = useState<any>();
+const URLAPI = "https://3000-firebase-listatareas-1762974317595.cluster-ocv3ypmyqfbqysslgd7zlhmxek.cloudworkstations.dev/tareas";
 
-export default function Index() {
+const index = () => {
   return (
-    <View
-      style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
-      <Text>Edit app/index.tsx to edit this screen.</Text>
+    <View>
+      <Text>index</Text>
     </View>
-  );
+  )
 }
+
+export default index

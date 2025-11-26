@@ -1,28 +1,53 @@
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Modal, FlatList } from 'react-native';
 import React, { useState } from 'react';
+import { Stack } from 'expo-router';
 import TaskForm from '../components/TaskForm';
-import { Task } from './types'; 
+import { Task } from './types'; // 🚨 CORRECCIÓN DE RUTA
+import axios from 'axios';
 
-const URLAPI = "";
+const URLAPI = ""; 
 
 const Index = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
 
   const handleTaskCreated = (newTask: Task) => {
-    // 1. Añade la nueva tarea al inicio del array de tareas (para verla primero)
     setTasks(prevTasks => [newTask, ...prevTasks]);
     setModalVisible(false);
   };
 
   const handleNoOpError = (message: string) => {
-    console.log("Error ignorado en index:", message);
+    console.log("Error ignorado:", message);
+  };
+  
+  const handleDeleteTask = async (id: string) => {
+    // 🚨 CORRECCIÓN: Aseguramos que URLAPI sea un string antes de usar includes
+    if (typeof URLAPI === 'string' && URLAPI.includes('https')) {
+        try {
+            await axios.delete(`${URLAPI}/${id}`);
+        } catch (error) {
+            console.error('Error al eliminar la tarea:', error);
+            return;
+        }
+    } else {
+        await new Promise(resolve => setTimeout(resolve, 500)); 
+    }
+    
+    setTasks(prevTasks => prevTasks.filter(t => t.id !== id));
   };
 
   const renderTask = ({ item }: { item: Task }) => (
     <View style={styles.taskItem}>
-      <Text style={styles.taskTitle}>{item.title}</Text>
-      <Text style={styles.taskDescription}>{item.description}</Text>
+      <View style={styles.taskContent}>
+        <Text style={styles.taskTitle}>{item.title}</Text>
+        <Text style={styles.taskDescription}>{item.description}</Text>
+      </View>
+      <TouchableOpacity 
+        style={styles.deleteButton} 
+        onPress={() => handleDeleteTask(item.id)}
+      >
+        <Text style={styles.deleteButtonText}>X</Text>
+      </TouchableOpacity>
     </View>
   );
 
@@ -37,7 +62,6 @@ const Index = () => {
         <Text style={styles.buttonText}>+ Crear Nueva Tarea</Text>
       </TouchableOpacity>
       
-      {/* 2. Visualización de la lista de tareas */}
       {tasks.length === 0 ? (
         <View style={styles.listContainer}>
           <Text style={styles.emptyText}>No hay tareas pendientes. Presiona '+' para empezar.</Text>
@@ -72,6 +96,21 @@ const Index = () => {
   );
 };
 
+export const unstable_settings = {
+  initialRouteName: 'index',
+};
+
+export function Screen() {
+  return (
+    <Stack.Screen 
+      options={() => ({ 
+        headerShown: false, 
+        title: 'Mis Tareas'
+      })} 
+    />
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -99,7 +138,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  // Estilos para la lista
   taskList: {
     flex: 1,
   },
@@ -109,7 +147,13 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 10,
     borderLeftWidth: 4,
-    borderLeftColor: '#03DAC6', 
+    borderLeftColor: '#03DAC6',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  taskContent: {
+    flex: 1,
   },
   taskTitle: {
     fontSize: 18,
@@ -121,7 +165,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#BBBBBB',
   },
-  // Estilos para el mensaje de lista vacía
+  deleteButton: {
+    backgroundColor: '#CF6679',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 5,
+    marginLeft: 15,
+  },
+  deleteButtonText: {
+    color: '#121212',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
   listContainer: {
     flex: 1,
     alignItems: 'center',

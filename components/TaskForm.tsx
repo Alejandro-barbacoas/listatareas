@@ -1,7 +1,8 @@
 import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import React, { useState } from 'react';
-import * as z from 'zod'; // Importa zod
-import axios from 'axios';
+import * as z from 'zod';
+import axios, { AxiosError } from 'axios';
+import { Task } from '../app/types';
 
 const alphanumericRegex = /^[a-zA-Z0-9\s]+$/;
 
@@ -19,16 +20,14 @@ const taskSchema = z.object({
 
 type TaskData = z.infer<typeof taskSchema>;
 
-
 interface TaskFormProps {
-  onClose: () => void; // Para cerrar el modal
-  onTaskCreated: (task: TaskData) => void; // Para notificar al componente padre
+  onClose: () => void;
+  onTaskCreated: (task: Task) => void;
   onError: (message: string) => void;
-  urlApi: string; // Recibimos la URL por props
+  urlApi: string;
 }
 
-const TaskForm: React.FC<TaskFormProps> = ({ onClose, onTaskCreated, urlApi }) => {
-  // Estados
+const TaskForm: React.FC<TaskFormProps> = ({ onClose, onTaskCreated, onError, urlApi }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [errors, setErrors] = useState<z.ZodIssue[]>([]);
@@ -45,6 +44,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onTaskCreated, urlApi }) =
 
     if (!validationResult.success) {
       setErrors(validationResult.error.issues);
+      onError('Error de validación: Revisa los campos del formulario.');
       return;
     }
 
@@ -52,17 +52,50 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onTaskCreated, urlApi }) =
     setIsSubmitting(true);
 
     try {
-      // 🚀 Llamada a la API
-      const response = await axios.post(urlApi, validationResult.data);
+      // 1. Definimos una variable para guardar la respuesta de la tarea
+      let taskResponse: Task;
+
+      // === LÓGICA DE MOCKING: Comprobamos si la URL es válida ===
+      // Si urlApi está vacío O si no incluye 'https' (asumiendo que debe ser una URL segura),
+      // entonces ejecutamos la simulación (mocking).
+      if (urlApi && urlApi.includes('https')) {
+          
+          // --- LÓGICA DE API REAL (Si la URL es válida) ---
+          const response = await axios.post(urlApi, validationResult.data);
+          taskResponse = response.data as Task; // La respuesta del servidor es la tarea creada
+
+      } else {
+          
+          // --- LÓGICA DE MOCKING (SIMULACIÓN DE ÉXITO) ---
+          console.log("SIMULACIÓN ACTIVADA: La URL de la API no es válida. No se hará la llamada real.");
+          await new Promise(resolve => setTimeout(resolve, 1500)); // Esperamos 1.5 segundos para simular una red
+          
+          // Creamos una tarea FAKE con un ID temporal
+          taskResponse = {
+              id: Date.now().toString(),
+              title: formData.title,
+              description: formData.description,
+          };
+      }
+      // === FIN DE LÓGICA DE MOCKING ===
+
+      // 2. Aquí llamamos a onTaskCreated con la tarea (real o simulada)
+      onTaskCreated(taskResponse); 
       
-      // Notificar al componente padre y limpiar
-      onTaskCreated(response.data); 
+      // 3. Limpiamos el formulario y cerramos el modal
       setTitle('');
       setDescription('');
-      
+
     } catch (error) {
       console.error('Error al enviar la tarea:', error);
-      // Aquí podrías mostrar un error de la API si fuera necesario
+      
+      let errorMessage = 'Fallo desconocido al conectar con el servidor.';
+
+      if (axios.isAxiosError(error)) {
+        errorMessage = `Fallo en el servidor. Código: ${error.response?.status || 'sin respuesta'}.`;
+      }
+      
+      onError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -72,21 +105,18 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onTaskCreated, urlApi }) =
     <View style={styles.formContainer}>
       <Text style={styles.title}>Crear Tarea</Text>
 
-      {/* Campo Título */}
       <TextInput
         style={styles.input}
         placeholder="Título"
         placeholderTextColor="#888"
         value={title}
         onChangeText={setTitle}
-        // Limpia errores al cambiar el foco
-        onFocus={() => setErrors(prev => prev.filter(e => !e.path.includes('title')))} 
+        onFocus={() => setErrors(prev => prev.filter(e => !e.path.includes('title')))}
       />
       {getFieldError('title') && (
         <Text style={styles.errorText}>{getFieldError('title')}</Text>
       )}
 
-      {/* Campo Descripción */}
       <TextInput
         style={[styles.input, styles.textArea]}
         placeholder="Descripción detallada"
@@ -95,16 +125,15 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onTaskCreated, urlApi }) =
         onChangeText={setDescription}
         multiline
         numberOfLines={4}
-        onFocus={() => setErrors(prev => prev.filter(e => !e.path.includes('description')))} 
+        onFocus={() => setErrors(prev => prev.filter(e => !e.path.includes('description')))}
       />
       {getFieldError('description') && (
         <Text style={styles.errorText}>{getFieldError('description')}</Text>
       )}
 
-      {/* Botones de Acción */}
       <View style={styles.buttonGroup}>
-        <TouchableOpacity 
-          style={[styles.actionButton, styles.cancelButton]} 
+        <TouchableOpacity
+          style={[styles.actionButton, styles.cancelButton]}
           onPress={onClose}
           disabled={isSubmitting}
         >
@@ -123,10 +152,8 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onTaskCreated, urlApi }) =
   );
 };
 
-
 const styles = StyleSheet.create({
   formContainer: {
-    // El fondo se define en el ModalContent de index.tsx
   },
   title: {
     fontSize: 22,
@@ -136,10 +163,10 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   input: {
-    backgroundColor: '#333333', // Fondo del input más oscuro
-    color: '#E0E0E0', // Texto del input claro
+    backgroundColor: '#333333',
+    color: '#E0E0E0',
     borderWidth: 1,
-    borderColor: '#444444', 
+    borderColor: '#444444',
     padding: 12,
     marginBottom: 10,
     borderRadius: 8,
@@ -149,7 +176,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   errorText: {
-    color: '#CF6679', // Color de error elegante (rojo apagado)
+    color: '#CF6679',
     marginBottom: 10,
     fontSize: 12,
   },
@@ -166,7 +193,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   submitButton: {
-    backgroundColor: '#03DAC6', 
+    backgroundColor: '#03DAC6',
   },
   cancelButton: {
     backgroundColor: '#333333',
@@ -177,7 +204,7 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   buttonText: {
-    color: '#121212', 
+    color: '#121212',
     fontWeight: 'bold',
   }
 });

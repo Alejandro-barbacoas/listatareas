@@ -1,10 +1,14 @@
 {
-    "tareas": [
-      { "id": "1", "title": "a title", "description": "HOLA", "completed": true },
-      { "id": "2", "title": "another title", "views": 200 }
-    ],
-    "users":[
-        {}
-        
-    ]
-  }
+  "tareas": [
+    {
+      "id": "1",
+      "title": "Configurar Entorno",
+      "description": "Instalar dependencias de React Native, Zod y Axios."
+    },
+    {
+      "id": "2",
+      "title": "Diseño UX Oscuro",
+      "description": "Aplicar estilos de tema oscuro en index y TaskForm."
+    }
+  ]
+}

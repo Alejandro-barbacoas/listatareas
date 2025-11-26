@@ -1,20 +1,20 @@
-import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import axios from 'axios';
 import React, { useState } from 'react';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import * as z from 'zod';
-import axios, { AxiosError } from 'axios';
-import { Task } from '../app/types';
+import { Task } from './types';
 
 const alphanumericRegex = /^[a-zA-Z0-9\s]+$/;
 
 const taskSchema = z.object({
   title: z
     .string()
-    .nonempty('El título es obligatorio.')
+    .nonempty('El título es obligatorio. Imbécil')
     .regex(alphanumericRegex, 'Solo se permiten caracteres alfanuméricos y espacios.'),
 
   description: z
     .string()
-    .nonempty('La descripción es obligatoria.')
+    .nonempty('La descripción es obligatoria. Pendeje')
     .regex(alphanumericRegex, 'Solo se permiten caracteres alfanuméricos y espacios.'),
 });
 
@@ -52,37 +52,27 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onTaskCreated, onError, ur
     setIsSubmitting(true);
 
     try {
-      // 1. Definimos una variable para guardar la respuesta de la tarea
       let taskResponse: Task;
 
-      // === LÓGICA DE MOCKING: Comprobamos si la URL es válida ===
-      // Si urlApi está vacío O si no incluye 'https' (asumiendo que debe ser una URL segura),
-      // entonces ejecutamos la simulación (mocking).
       if (urlApi && urlApi.includes('https')) {
           
-          // --- LÓGICA DE API REAL (Si la URL es válida) ---
           const response = await axios.post(urlApi, validationResult.data);
-          taskResponse = response.data as Task; // La respuesta del servidor es la tarea creada
+          taskResponse = response.data as Task; 
 
       } else {
           
-          // --- LÓGICA DE MOCKING (SIMULACIÓN DE ÉXITO) ---
           console.log("SIMULACIÓN ACTIVADA: La URL de la API no es válida. No se hará la llamada real.");
-          await new Promise(resolve => setTimeout(resolve, 1500)); // Esperamos 1.5 segundos para simular una red
+          await new Promise(resolve => setTimeout(resolve, 1500));
           
-          // Creamos una tarea FAKE con un ID temporal
           taskResponse = {
               id: Date.now().toString(),
               title: formData.title,
               description: formData.description,
           };
       }
-      // === FIN DE LÓGICA DE MOCKING ===
 
-      // 2. Aquí llamamos a onTaskCreated con la tarea (real o simulada)
       onTaskCreated(taskResponse); 
       
-      // 3. Limpiamos el formulario y cerramos el modal
       setTitle('');
       setDescription('');
 
@@ -103,7 +93,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onTaskCreated, onError, ur
 
   return (
     <View style={styles.formContainer}>
-      <Text style={styles.title}>Crear Tarea</Text>
+      <Text style={styles.title}>Nova Tasca Per A Tu</Text>
 
       <TextInput
         style={styles.input}
@@ -119,7 +109,7 @@ const TaskForm: React.FC<TaskFormProps> = ({ onClose, onTaskCreated, onError, ur
 
       <TextInput
         style={[styles.input, styles.textArea]}
-        placeholder="Descripción detallada"
+        placeholder="Agregale una descripción"
         placeholderTextColor="#888"
         value={description}
         onChangeText={setDescription}
@@ -156,11 +146,10 @@ const styles = StyleSheet.create({
   formContainer: {
   },
   title: {
-    fontSize: 22,
+    fontSize: 25,
     fontWeight: 'bold',
     color: '#E0E0E0',
     marginBottom: 20,
-    textAlign: 'center',
   },
   input: {
     backgroundColor: '#333333',
@@ -179,6 +168,7 @@ const styles = StyleSheet.create({
     color: '#CF6679',
     marginBottom: 10,
     fontSize: 12,
+    fontWeight: 'bold',
   },
   buttonGroup: {
     flexDirection: 'row',
@@ -193,18 +183,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   submitButton: {
-    backgroundColor: '#03DAC6',
+    backgroundColor: 'white',
   },
   cancelButton: {
-    backgroundColor: '#333333',
-    borderColor: '#444444',
-    borderWidth: 1,
+    backgroundColor: 'gray',
   },
   disabledButton: {
     opacity: 0.5,
   },
   buttonText: {
-    color: '#121212',
+    color: 'black',
     fontWeight: 'bold',
   }
 });

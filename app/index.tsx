@@ -1,11 +1,9 @@
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Modal, FlatList } from 'react-native';
 import React, { useState } from 'react';
-import { Stack } from 'expo-router';
 import TaskForm from '../components/TaskForm';
-import { Task } from './types'; // 🚨 CORRECCIÓN DE RUTA
-import axios from 'axios';
+import { Task } from '../components/types'; 
 
-const URLAPI = ""; 
+const URLAPI = "";
 
 const Index = () => {
   const [modalVisible, setModalVisible] = useState(false);
@@ -16,35 +14,24 @@ const Index = () => {
     setModalVisible(false);
   };
 
-  const handleNoOpError = (message: string) => {
-    console.log("Error ignorado:", message);
+  const handleDeleteTask = (idToDelete: string) => {
+    setTasks(currentTasks => currentTasks.filter(task => task.id !== idToDelete));
   };
-  
-  const handleDeleteTask = async (id: string) => {
-    // 🚨 CORRECCIÓN: Aseguramos que URLAPI sea un string antes de usar includes
-    if (typeof URLAPI === 'string' && URLAPI.includes('https')) {
-        try {
-            await axios.delete(`${URLAPI}/${id}`);
-        } catch (error) {
-            console.error('Error al eliminar la tarea:', error);
-            return;
-        }
-    } else {
-        await new Promise(resolve => setTimeout(resolve, 500)); 
-    }
-    
-    setTasks(prevTasks => prevTasks.filter(t => t.id !== id));
+
+  const handleNoOpError = (message: string) => {
+    console.log("Error ignorado en index:", message);
   };
 
   const renderTask = ({ item }: { item: Task }) => (
     <View style={styles.taskItem}>
-      <View style={styles.taskContent}>
+      <View style={styles.taskTextContainer}>
         <Text style={styles.taskTitle}>{item.title}</Text>
         <Text style={styles.taskDescription}>{item.description}</Text>
       </View>
+
       <TouchableOpacity 
         style={styles.deleteButton} 
-        onPress={() => handleDeleteTask(item.id)}
+        onPress={() => handleDeleteTask(item.id)} 
       >
         <Text style={styles.deleteButtonText}>X</Text>
       </TouchableOpacity>
@@ -53,18 +40,13 @@ const Index = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.header}>Mis Tareas</Text>
+      <Text style={styles.header}>iTasks</Text>
 
-      <TouchableOpacity 
-        style={styles.createButton} 
-        onPress={() => setModalVisible(true)}
-      >
-        <Text style={styles.buttonText}>+ Crear Nueva Tarea</Text>
-      </TouchableOpacity>
-      
       {tasks.length === 0 ? (
         <View style={styles.listContainer}>
-          <Text style={styles.emptyText}>No hay tareas pendientes. Presiona '+' para empezar.</Text>
+          <Text style={styles.emptyText}>No hi ha tasques per mostrar</Text>
+          <Text style={styles.emptyText}>No hay tareas para mostrar</Text>
+          <Text style={styles.emptyText}>There's no tasks to show</Text>
         </View>
       ) : (
         <FlatList
@@ -72,9 +54,17 @@ const Index = () => {
           renderItem={renderTask}
           keyExtractor={(item) => item.id.toString()}
           style={styles.taskList}
+          contentContainerStyle={{ paddingBottom: 100 }} 
         />
       )}
       
+      <TouchableOpacity 
+        style={styles.fab} 
+        onPress={() => setModalVisible(true)}
+      >
+        <Text style={styles.fabIcon}>+</Text>
+      </TouchableOpacity>
+
       <Modal
         animationType="slide"
         transparent={true}
@@ -96,47 +86,42 @@ const Index = () => {
   );
 };
 
-export const unstable_settings = {
-  initialRouteName: 'index',
-};
-
-export function Screen() {
-  return (
-    <Stack.Screen 
-      options={() => ({ 
-        headerShown: false, 
-        title: 'Mis Tareas'
-      })} 
-    />
-  );
-}
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#121212',
-    paddingHorizontal: 20,
+    paddingHorizontal: 20, 
   },
   header: {
     fontSize: 32,
     fontWeight: 'bold',
     color: '#E0E0E0',
     marginTop: 40,
-    marginBottom: 30,
+    marginBottom: 20,
     textAlign: 'center',
   },
-  createButton: {
-    backgroundColor: '#BB86FC',
-    padding: 15,
-    borderRadius: 8,
+  fab: {
+    position: 'absolute',
+    width: 60,
+    height: 60,
     alignItems: 'center',
-    marginBottom: 20,
-    elevation: 3,
+    justifyContent: 'center',
+    right: 30,
+    bottom: 30,
+    backgroundColor: '#DBA94D',
+    borderRadius: 30,
+    elevation: 8,    
+    shadowColor: '#000', 
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    zIndex: 1,
   },
-  buttonText: {
-    color: '#121212',
-    fontSize: 18,
+  fabIcon: {
+    fontSize: 40, 
+    color: 'black',
     fontWeight: 'bold',
+    marginTop: -2, 
   },
   taskList: {
     flex: 1,
@@ -147,16 +132,17 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginBottom: 10,
     borderLeftWidth: 4,
-    borderLeftColor: '#03DAC6',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    borderLeftColor: 'white', 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
   },
-  taskContent: {
-    flex: 1,
+  taskTextContainer: {
+    flex: 1, 
+    marginRight: 10,
   },
   taskTitle: {
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#E0E0E0',
     marginBottom: 5,
@@ -167,15 +153,16 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     backgroundColor: '#CF6679',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 5,
-    marginLeft: 15,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   deleteButtonText: {
     color: '#121212',
     fontWeight: 'bold',
-    fontSize: 16,
+    fontSize: 14,
   },
   listContainer: {
     flex: 1,

@@ -2,12 +2,18 @@ import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, Modal, FlatList
 import React, { useState } from 'react';
 import TaskForm from '../components/TaskForm';
 import { Task } from '../components/types'; 
+import LogIn from '../components/LogIn';
 
 const URLAPI = "";
 
 const Index = () => {
   const [modalVisible, setModalVisible] = useState(false);
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+  };
 
   const handleTaskCreated = (newTask: Task) => {
     setTasks(prevTasks => [newTask, ...prevTasks]);
@@ -37,6 +43,10 @@ const Index = () => {
       </TouchableOpacity>
     </View>
   );
+
+  if (!isLoggedIn) {
+    return <LogIn onLogin={handleLogin} />;
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -110,7 +120,7 @@ const styles = StyleSheet.create({
     bottom: 30,
     backgroundColor: '#DBA94D',
     borderRadius: 30,
-    elevation: 8,    
+    elevation: 8, 
     shadowColor: '#000', 
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,

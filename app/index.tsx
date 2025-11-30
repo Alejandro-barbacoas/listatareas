@@ -45,7 +45,7 @@ const Index = () => {
   );
 
   if (!isLoggedIn) {
-    return <LogIn onLogin={handleLogin} />;
+    return <LogIn alIniciarSesion={handleLogin} />;
   }
 
   return (
